@@ -1,0 +1,10 @@
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+.vs/
+[Bb]in/
+[Oo]bj/
+![Bb]in/Designs/*
+packages/
