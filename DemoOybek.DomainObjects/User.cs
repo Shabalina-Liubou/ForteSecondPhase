@@ -2,6 +2,12 @@
 
 namespace DemoOybek.DomainObjects
 {
+    public enum Roles
+    {
+        Admin,
+        User
+    }
+
     public class User
     {
         public long UserId { get; set; }
@@ -13,5 +19,6 @@ namespace DemoOybek.DomainObjects
         public string PasswordHash { get; set; }
         public string Role { get; set; }
         public bool HasAcceptedTerms { get; set; }
+
     }
 }

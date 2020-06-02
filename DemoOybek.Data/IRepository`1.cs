@@ -10,5 +10,7 @@ namespace DemoOybek.Data
         IQueryable<T> GetAll();
         void Insert(T entry);
         int SaveChanges();
+
+        string HashPassword(string password);
     }
 }

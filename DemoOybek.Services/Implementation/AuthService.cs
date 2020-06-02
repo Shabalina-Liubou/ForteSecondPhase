@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using DemoOybek.Data;
 using DemoOybek.DomainObjects;
@@ -54,12 +55,73 @@ namespace DemoOybek.Services.Implementation
 
         public UserViewModel Register(RegisterViewModel viewModel)
         {
-            throw new NotImplementedException();
+            if (viewModel == null)
+                throw new ArgumentNullException(nameof(viewModel));
+            if (string.IsNullOrWhiteSpace(viewModel.Email))
+                throw new ArgumentException("Email cannot be empty");
+            if (string.IsNullOrWhiteSpace(viewModel.Password))
+                throw new ArgumentException("Password cannot be empty");
+
+            var userExists = Repository.Where(x => x.Email == viewModel.Email).Any();
+            if (userExists)
+                throw new DuplicateException();
+
+            ValidatePassword(viewModel.Password);
+            var passwordHashed = HashPassword(viewModel.Password);
+
+            CheckPasswordMismatch(viewModel.Password, viewModel.PasswordSecondTime);
+
+            if (!viewModel.HasAcceptedTerms)
+                throw new TermsNotAcceptedException("Please, accept the terms, if you want to use our product.");
+
+            var user = new User
+            {
+                DateCreated = DateTime.UtcNow,
+                Email = viewModel.Email,
+                FirstName = viewModel.FirstName,
+                LastName = viewModel.LastName,
+                Role = Roles.User.ToString(),
+                LastLoggedIn = DateTime.UtcNow,
+                PasswordHash = passwordHashed,
+                HasAcceptedTerms = true
+            };
+
+            Repository.Insert(user);
+            Repository.SaveChanges();
+
+            return new UserViewModel
+            {
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role,
+                UserId = user.UserId
+            };
         }
 
-        private string HashPassword(string password)
+        public string HashPassword(string password)
         {
-            return password;
+            var crypt = new System.Security.Cryptography.SHA256Managed();
+            var hash = new System.Text.StringBuilder();
+            byte[] crypto = crypt.ComputeHash(Encoding.UTF8.GetBytes(password));
+            foreach (byte theByte in crypto)
+            {
+                hash.Append(theByte.ToString("x2"));
+            }
+            return hash.ToString();
         }
+
+        private void ValidatePassword(string password)
+        {
+            if (password.Length <= 3)
+                throw new WeakPasswordException();
+        }
+
+        private void CheckPasswordMismatch(string firstPassword, string secondPassword)
+        {
+            if (!firstPassword.Equals(secondPassword))
+                throw new PasswordMismatchException();
+        }
+
     }
 }
